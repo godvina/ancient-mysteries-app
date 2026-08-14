@@ -262,7 +262,7 @@ function showMap() {
         {name:"Karnak Temple", lat:25.7188, lng:32.6573, color:"#c9a227", pattern:"Solar Alignment", deity:"Amun-Ra"},
     ];
 
-    sites.forEach(s => {
+    sites.forEach((s, idx) => {
         const marker = L.circleMarker([s.lat, s.lng], {
             radius: s.color === '#10b981' ? 10 : 7,
             fillColor: s.color,
@@ -271,11 +271,13 @@ function showMap() {
             fillOpacity: 0.85,
         }).addTo(map);
 
+        const isSiteIdx = s.color === '#10b981' ? idx : -1;
         marker.bindPopup(`
-            <div style="font-size:13px;min-width:180px;">
+            <div style="font-size:13px;min-width:200px;">
                 <b>${s.name}</b><br>
                 <span style="color:#666;">${s.deity}</span><br>
-                <span style="color:#c9a227;font-size:11px;">${s.pattern}</span>
+                <span style="color:#b8860b;font-size:11px;">${s.pattern}</span><br>
+                ${isSiteIdx >= 0 && isSiteIdx < 8 ? `<button onclick="document.querySelector('.leaflet-popup-close-button').click();showSite(${isSiteIdx})" style="margin-top:6px;background:#c9a227;color:#000;border:none;padding:6px 12px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;">▶ View Site Details & Audio</button>` : `<span style="font-size:10px;color:#999;display:block;margin-top:4px;">Global parallel site</span>`}
             </div>
         `);
     });
