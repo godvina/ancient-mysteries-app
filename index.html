@@ -8,6 +8,8 @@
 <meta name="theme-color" content="#0a0e14">
 <link rel="manifest" href="manifest.json">
 <title>Ancient Mysteries</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e14;color:#e2e8f0;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -55,6 +57,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .bottom-nav a{flex:1;text-align:center;font-size:0.6rem;color:#64748b;text-decoration:none;padding:4px 0}
 .bottom-nav a.active{color:#c9a227}
 .bottom-nav a div{font-size:1.1rem;margin-bottom:2px}
+#mapView{display:none;height:calc(100vh - 120px);width:100%}
 </style>
 </head>
 <body>
@@ -65,11 +68,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div class="app-content" id="siteList"></div>
 <div class="app-content site-detail" id="siteDetail"></div>
+<div id="mapView"></div>
 
 <div class="bottom-nav">
     <a href="#" class="active" onclick="showList()"><div>🏛️</div>Sites</a>
     <a href="#" onclick="showPatterns()"><div>🔄</div>Patterns</a>
-    <a href="#" onclick="showCrosswalk()"><div>🌍</div>Global</a>
+    <a href="#" onclick="showMap()"><div>🌍</div>Map</a>
+    <a href="#" onclick="showCrosswalk()"><div>🔀</div>Global</a>
 </div>
 
 <script src="app-data.js"></script>
@@ -189,8 +194,9 @@ function showPatterns() {
 function showCrosswalk() {
     document.getElementById('siteList').style.display = 'block';
     document.getElementById('siteDetail').style.display = 'none';
+    document.getElementById('mapView').style.display = 'none';
     document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
-    document.querySelectorAll('.bottom-nav a')[2].classList.add('active');
+    document.querySelectorAll('.bottom-nav a')[3].classList.add('active');
 
     const crosswalk = APP_DATA.crosswalk || [];
     document.getElementById('siteList').innerHTML = `
@@ -211,6 +217,94 @@ function showCrosswalk() {
         `).join('')}
     `;
 }
+
+// Global Map
+let map = null;
+function showMap() {
+    document.getElementById('siteList').style.display = 'none';
+    document.getElementById('siteDetail').style.display = 'none';
+    document.getElementById('mapView').style.display = 'block';
+    document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav a')[2].classList.add('active');
+
+    if (map) return; // Already initialized
+
+    map = L.map('mapView').setView([30, 20], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 18,
+    }).addTo(map);
+
+    const sites = [
+        // Irish Sites (green)
+        {name:"Newgrange", lat:53.6947, lng:-6.4755, color:"#10b981", pattern:"Solar, Underground, Kingship", deity:"Dagda"},
+        {name:"Knowth", lat:53.7015, lng:-6.4913, color:"#10b981", pattern:"Solar/Lunar Alignment", deity:"Lunar calendar"},
+        {name:"Hill of Tara", lat:53.5792, lng:-6.6119, color:"#10b981", pattern:"Divine Kingship", deity:"Nuada, Lugh"},
+        {name:"Knocknarea", lat:54.2597, lng:-8.5709, color:"#10b981", pattern:"Underground, Kingship", deity:"Morrigan/Medb"},
+        {name:"Skellig Michael", lat:51.7703, lng:-10.5385, color:"#10b981", pattern:"Underground Retreat", deity:"Manannán"},
+        {name:"Loughcrew", lat:53.7453, lng:-7.1186, color:"#10b981", pattern:"Solar Alignment", deity:"Brigid"},
+        {name:"Carrowmore", lat:54.2500, lng:-8.5167, color:"#10b981", pattern:"Pre-Flood, Solar", deity:"Tuatha Dé Danann"},
+        {name:"Dowth", lat:53.6890, lng:-6.4504, color:"#10b981", pattern:"Solar (sunset)", deity:"Boann"},
+        // Global Parallel Sites (gold)
+        {name:"Giza Pyramids", lat:29.9792, lng:31.1342, color:"#c9a227", pattern:"Solar Alignment, Construction", deity:"Osiris/Ra"},
+        {name:"Göbekli Tepe", lat:37.2231, lng:38.9225, color:"#c9a227", pattern:"Pre-Flood, Alignment", deity:"Unknown (oldest)"},
+        {name:"Angkor Wat", lat:13.4125, lng:103.8670, color:"#c9a227", pattern:"Solar Alignment", deity:"Vishnu"},
+        {name:"Chichén Itzá", lat:20.6843, lng:-88.5678, color:"#c9a227", pattern:"Equinox Alignment", deity:"Kukulkan"},
+        {name:"Puma Punku", lat:-16.5617, lng:-68.6803, color:"#c9a227", pattern:"Precision, Pre-Flood", deity:"Viracocha"},
+        {name:"Baalbek", lat:34.0069, lng:36.2048, color:"#c9a227", pattern:"Impossible Construction", deity:"Baal/Jupiter"},
+        {name:"Eridu", lat:30.8158, lng:45.9945, color:"#c9a227", pattern:"Oldest Sacred Site", deity:"Enki"},
+        {name:"Stonehenge", lat:51.1789, lng:-1.8262, color:"#c9a227", pattern:"Solar Alignment", deity:"Unknown"},
+        {name:"Carnac", lat:47.5850, lng:-3.0744, color:"#c9a227", pattern:"Megalithic Alignment", deity:"Unknown"},
+        {name:"Sacsayhuamán", lat:-13.5094, lng:-71.9828, color:"#c9a227", pattern:"Precision Construction", deity:"Inti"},
+        {name:"Nan Madol", lat:6.8435, lng:158.3337, color:"#c9a227", pattern:"Megalithic, Water", deity:"Saudeleur"},
+        {name:"Easter Island", lat:-27.1127, lng:-109.3497, color:"#c9a227", pattern:"Megalithic", deity:"Make-Make"},
+        {name:"Hal Saflieni Hypogeum", lat:35.8690, lng:14.5074, color:"#c9a227", pattern:"110Hz Resonance, Underground", deity:"Neolithic Goddess"},
+        {name:"Karnak Temple", lat:25.7188, lng:32.6573, color:"#c9a227", pattern:"Solar Alignment", deity:"Amun-Ra"},
+    ];
+
+    sites.forEach(s => {
+        const marker = L.circleMarker([s.lat, s.lng], {
+            radius: s.color === '#10b981' ? 10 : 7,
+            fillColor: s.color,
+            color: '#fff',
+            weight: 1,
+            fillOpacity: 0.85,
+        }).addTo(map);
+
+        marker.bindPopup(`
+            <div style="font-size:13px;min-width:180px;">
+                <b>${s.name}</b><br>
+                <span style="color:#666;">${s.deity}</span><br>
+                <span style="color:#c9a227;font-size:11px;">${s.pattern}</span>
+            </div>
+        `);
+    });
+
+    // Draw lines from Irish sites to their parallels
+    const connections = [
+        [[53.6947,-6.4755],[30.8158,45.9945]], // Newgrange → Eridu
+        [[53.6947,-6.4755],[29.9792,31.1342]], // Newgrange → Giza
+        [[53.6947,-6.4755],[37.2231,38.9225]], // Newgrange → Göbekli
+        [[53.7453,-7.1186],[20.6843,-88.5678]], // Loughcrew → Chichén Itzá
+        [[53.7453,-7.1186],[35.8690,14.5074]], // Loughcrew → Malta
+        [[54.2500,-8.5167],[37.2231,38.9225]], // Carrowmore → Göbekli
+        [[54.2500,-8.5167],[35.8690,14.5074]], // Carrowmore → Malta (110Hz)
+    ];
+
+    connections.forEach(([from, to]) => {
+        L.polyline([from, to], {color: 'rgba(201,162,39,0.3)', weight: 1, dashArray: '4 4'}).addTo(map);
+    });
+
+    setTimeout(() => map.invalidateSize(), 100);
+}
+
+// Override showList/showPatterns/showCrosswalk to hide map
+const _origShowList = showList;
+showList = function() { document.getElementById('mapView').style.display = 'none'; _origShowList(); };
+const _origShowPatterns = showPatterns;
+showPatterns = function() { document.getElementById('mapView').style.display = 'none'; _origShowPatterns(); };
+const _origShowCrosswalk = showCrosswalk;
+showCrosswalk = function() { document.getElementById('mapView').style.display = 'none'; _origShowCrosswalk(); };
 
 // Audio player
 let audioEl = null;
