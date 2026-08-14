@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0e14">
+<link rel="manifest" href="manifest.json">
+<title>Ancient Mysteries</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e14;color:#e2e8f0;min-height:100vh;-webkit-font-smoothing:antialiased}
+.app-header{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:16px 20px;border-bottom:2px solid #c9a227}
+.app-header h1{font-size:1rem;color:#fff;font-weight:600}
+.app-header h1 span{color:#c9a227}
+.app-content{padding:16px 16px 80px}
+
+/* Site cards */
+.site-card{background:#111827;border:1px solid #1e293b;border-left:4px solid #c9a227;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all 0.2s}
+.site-card:active{transform:scale(0.98);border-color:#c9a227}
+.site-card h2{font-size:0.9rem;font-weight:700;color:#e2e8f0;margin-bottom:4px}
+.site-card .meta{font-size:0.7rem;color:#c9a227}
+.site-card .desc{font-size:0.72rem;color:#94a3b8;margin-top:6px;line-height:1.5}
+
+/* Site detail */
+.site-detail{display:none;animation:fadeIn 0.2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.back-btn{font-size:0.75rem;color:#c9a227;cursor:pointer;margin-bottom:16px;display:inline-flex;align-items:center;gap:4px}
+.section-label{font-size:0.65rem;font-weight:700;color:#c9a227;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px}
+.info-card{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:14px;margin-bottom:10px}
+.info-card h3{font-size:0.82rem;font-weight:700;color:#e2e8f0;margin-bottom:4px}
+.info-card p{font-size:0.72rem;color:#94a3b8;line-height:1.6}
+.audio-btn{background:rgba(201,162,39,0.15);border:1px solid rgba(201,162,39,0.4);color:#c9a227;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:0.78rem;font-weight:600;width:100%;text-align:center;margin:8px 0}
+.audio-btn:active{background:rgba(201,162,39,0.3)}
+.parallel-item{display:flex;align-items:center;gap:10px;padding:10px;background:#0d1520;border:1px solid #1e293b;border-radius:8px;margin-bottom:8px}
+.parallel-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.parallel-name{font-size:0.75rem;font-weight:600;color:#e2e8f0}
+.parallel-loc{font-size:0.65rem;color:#64748b}
+.parallel-pattern{font-size:0.6rem;color:#c9a227;margin-top:2px}
+.insight-box{background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.2);border-radius:10px;padding:14px;margin-top:12px}
+.insight-box .label{font-size:0.62rem;font-weight:700;color:#c9a227;text-transform:uppercase;margin-bottom:6px}
+.insight-box p{font-size:0.72rem;color:#e2e8f0;line-height:1.6}
+.dialogue-card{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer}
+.dialogue-card:active{background:#1a2332}
+.dialogue-header{font-size:0.78rem;font-weight:600;color:#e2e8f0}
+.dialogue-sub{font-size:0.65rem;color:#64748b;margin-top:2px}
+.dialogue-expanded{padding:12px;background:#0a0e14;border-radius:8px;margin-top:10px;max-height:400px;overflow-y:auto}
+.dialogue-line{margin-bottom:10px}
+.dialogue-speaker{font-size:0.65rem;font-weight:700;margin-bottom:2px}
+.dialogue-text{font-size:0.72rem;color:#e2e8f0;line-height:1.5}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#111827;border-top:1px solid #1e293b;display:flex;padding:10px 0;z-index:50}
+.bottom-nav a{flex:1;text-align:center;font-size:0.6rem;color:#64748b;text-decoration:none;padding:4px 0}
+.bottom-nav a.active{color:#c9a227}
+.bottom-nav a div{font-size:1.1rem;margin-bottom:2px}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1>📜 Ancient Mysteries — <span>Field Companion</span></h1>
+</div>
+
+<div class="app-content" id="siteList"></div>
+<div class="app-content site-detail" id="siteDetail"></div>
+
+<div class="bottom-nav">
+    <a href="#" class="active" onclick="showList()"><div>🏛️</div>Sites</a>
+    <a href="#" onclick="showPatterns()"><div>🔄</div>Patterns</a>
+    <a href="#" onclick="showCrosswalk()"><div>🌍</div>Global</a>
+</div>
+
+<script src="app-data.js"></script>
+<script>
+// Render site list
+function showList() {
+    document.getElementById('siteList').style.display = 'block';
+    document.getElementById('siteDetail').style.display = 'none';
+    document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav a')[0].classList.add('active');
+
+    document.getElementById('siteList').innerHTML = `
+        <div style="margin-bottom:16px;">
+            <div style="font-size:0.82rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">Irish Sacred Sites</div>
+            <div style="font-size:0.68rem;color:#94a3b8;">Tap a site to explore its mythology, global parallels, and audio briefing</div>
+        </div>
+        ${APP_DATA.sites.map((s, i) => `
+            <div class="site-card" onclick="showSite(${i})">
+                <h2>${s.name}</h2>
+                <div class="meta">${s.deity} · ${s.date}</div>
+                <div class="desc">${s.tagline}</div>
+            </div>
+        `).join('')}
+    `;
+}
+
+// Render site detail
+function showSite(idx) {
+    const s = APP_DATA.sites[idx];
+    document.getElementById('siteList').style.display = 'none';
+    document.getElementById('siteDetail').style.display = 'block';
+
+    const parallels = s.global_parallels || [];
+    const dialogue = s.dialogue || null;
+    const colors = {Ireland:'#10b981',Egypt:'#f59e0b',Turkey:'#ef4444',Iraq:'#c9a227',Mexico:'#8b5cf6',Bolivia:'#3b82f6',Cambodia:'#ec4899',England:'#64748b',France:'#10b981',Lebanon:'#f59e0b'};
+
+    document.getElementById('siteDetail').innerHTML = `
+        <div class="back-btn" onclick="showList()">← Back to Sites</div>
+        <h2 style="font-size:1.1rem;margin-bottom:4px;">${s.name}</h2>
+        <div style="font-size:0.7rem;color:#c9a227;margin-bottom:12px;">${s.deity} · ${s.date}</div>
+
+        ${s.audio ? `<button class="audio-btn" onclick="playAudio('${s.audio}')">▶ Play Intelligence Brief (60s)</button>` : ''}
+
+        <div class="section-label">What to Look For</div>
+        <div class="info-card">
+            <p>${s.what_to_look_for}</p>
+        </div>
+
+        <div class="section-label">Key Facts</div>
+        <div class="info-card">
+            ${s.facts.map(f => `<p style="margin-bottom:6px;">• ${f}</p>`).join('')}
+        </div>
+
+        <div class="section-label">The Deity</div>
+        <div class="info-card">
+            <h3>${s.deity}</h3>
+            <p>${s.deity_description}</p>
+        </div>
+
+        <div class="section-label">Global Parallels — Same Patterns Worldwide</div>
+        ${parallels.map(p => `
+            <div class="parallel-item">
+                <div class="parallel-dot" style="background:${colors[p.country] || '#64748b'}"></div>
+                <div>
+                    <div class="parallel-name">${p.site} <span style="color:#64748b;font-weight:400;">(${p.country})</span></div>
+                    <div class="parallel-loc">${p.parallel_deity || ''}</div>
+                    <div class="parallel-pattern">${p.shared_pattern}</div>
+                </div>
+            </div>
+        `).join('')}
+
+        ${dialogue ? `
+            <div class="section-label">Cross-Cultural Dialogue</div>
+            <div class="dialogue-card" onclick="this.querySelector('.dialogue-expanded').style.display=this.querySelector('.dialogue-expanded').style.display==='none'?'block':'none'">
+                <div class="dialogue-header">${dialogue.entity_a} meets ${dialogue.entity_b}</div>
+                <div class="dialogue-sub">${dialogue.premise}</div>
+                <div class="dialogue-expanded" style="display:none;">
+                    ${dialogue.lines.map(l => `
+                        <div class="dialogue-line">
+                            <div class="dialogue-speaker" style="color:${l.speaker === dialogue.entity_a ? '#10b981' : '#c9a227'}">${l.speaker}</div>
+                            <div class="dialogue-text">"${l.text}"</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+
+        <div class="insight-box">
+            <div class="label">🔍 Investigative Insight</div>
+            <p>${s.insight}</p>
+        </div>
+    `;
+}
+
+function showPatterns() {
+    document.getElementById('siteList').style.display = 'block';
+    document.getElementById('siteDetail').style.display = 'none';
+    document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav a')[1].classList.add('active');
+
+    const patterns = APP_DATA.patterns || [];
+    document.getElementById('siteList').innerHTML = `
+        <div style="font-size:0.82rem;font-weight:700;color:#e2e8f0;margin-bottom:12px;">7 Cross-Cultural Patterns</div>
+        ${patterns.map(p => `
+            <div class="info-card" style="border-left:4px solid ${p.verdict === 'UNIVERSAL' ? '#10b981' : '#f59e0b'};">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3>${p.name}</h3>
+                    <span style="font-size:0.6rem;background:${p.verdict === 'UNIVERSAL' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)'};color:${p.verdict === 'UNIVERSAL' ? '#10b981' : '#f59e0b'};padding:2px 8px;border-radius:10px;">${p.verdict}</span>
+                </div>
+                <p style="margin-top:6px;">${p.description}</p>
+                <div style="font-size:0.65rem;color:#c9a227;margin-top:8px;">${p.cultures} cultures · ${p.entities} entities</div>
+            </div>
+        `).join('')}
+    `;
+}
+
+function showCrosswalk() {
+    document.getElementById('siteList').style.display = 'block';
+    document.getElementById('siteDetail').style.display = 'none';
+    document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav a')[2].classList.add('active');
+
+    const crosswalk = APP_DATA.crosswalk || [];
+    document.getElementById('siteList').innerHTML = `
+        <div style="font-size:0.82rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">Universal Deity Crosswalk</div>
+        <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:12px;">Same divine role, different cultures, no contact</div>
+        ${crosswalk.map(c => `
+            <div class="info-card">
+                <div style="font-size:0.7rem;color:#94a3b8;margin-bottom:6px;">${c.role}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                    ${c.sumerian ? `<div style="font-size:0.72rem;"><span style="color:#c9a227;">Sumerian:</span> ${c.sumerian}</div>` : ''}
+                    ${c.irish ? `<div style="font-size:0.72rem;"><span style="color:#10b981;">Irish:</span> ${c.irish}</div>` : ''}
+                    ${c.greek ? `<div style="font-size:0.72rem;"><span style="color:#3b82f6;">Greek:</span> ${c.greek}</div>` : ''}
+                    ${c.hebrew ? `<div style="font-size:0.72rem;"><span style="color:#f59e0b;">Hebrew:</span> ${c.hebrew}</div>` : ''}
+                    ${c.hindu ? `<div style="font-size:0.72rem;"><span style="color:#8b5cf6;">Hindu:</span> ${c.hindu}</div>` : ''}
+                    ${c.norse ? `<div style="font-size:0.72rem;"><span style="color:#ef4444;">Norse:</span> ${c.norse}</div>` : ''}
+                </div>
+            </div>
+        `).join('')}
+    `;
+}
+
+// Audio player
+let audioEl = null;
+function playAudio(src) {
+    if (!audioEl) { audioEl = new Audio(); }
+    if (audioEl.src && audioEl.src.includes(src) && !audioEl.paused) { audioEl.pause(); return; }
+    audioEl.src = src;
+    audioEl.play();
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
+
+// Init
+showList();
+</script>
+</body>
+</html>
